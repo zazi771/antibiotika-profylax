@@ -1,0 +1,183 @@
+import React, { useState } from 'react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+
+const allConditions = [
+  "Neutrofila granulocyter < 1,0 x 10^9/L",
+  "Defekt granulocytfunktion",
+  "Tung immunsuppressiv behandling",
+  "Högdosstrålbehandlat käkben",
+  "Antiresorptiva läkemedel i högdos",
+  "Ledprotes < 3 månader postoperativt",
+  "Borttagen mjälte",
+  "Cystisk fibros",
+  "Dialysbehandling",
+  "Downs syndrom",
+  "Organtransplantation utan tung cytostatikabehandling",
+  "Malign tumör utan tung cytostatikabehandling",
+  "Inflammatorisk och reumatologisk sjukdom med god sjukdomskontroll",
+  "Kortisonmedicinering",
+  "Välinställd diabetes",
+  "HIV",
+  "Thalassemi, Sicklecellanemi",
+  "Hypogammaglobulinemi",
+  "Pacemaker, stentar, shuntar, coils",
+  "Ledproteser äldre än 3 månader",
+  "Antiresorptiv behandling i lågdos mot osteoporos",
+  "GUCH-patienter (grown ups with congenital heart disease)",
+  "Tidigare endokarditer",
+  "Hjärtklaffprotes",
+  "Förekomst av cyanotiska vitier"
+];
+
+const recommendedList = [
+  "Neutrofila granulocyter < 1,0 x 10^9/L",
+  "Defekt granulocytfunktion",
+  "Tung immunsuppressiv behandling",
+  "Högdosstrålbehandlat käkben",
+  "Antiresorptiva läkemedel i högdos",
+  "Ledprotes < 3 månader postoperativt"
+];
+
+const specialCasesList = [
+  "GUCH-patienter (grown ups with congenital heart disease)",
+  "Tidigare endokarditer",
+  "Hjärtklaffprotes",
+  "Förekomst av cyanotiska vitier"
+];
+
+const notRecommendedList = allConditions.filter(item => !recommendedList.includes(item) && !specialCasesList.includes(item));
+
+const AntibiotikaProfilaxPage = () => {
+  const [result, setResult] = useState(null);
+  const [droppedItem, setDroppedItem] = useState(null);
+  const [showSources, setShowSources] = useState(false);
+
+  const onDragStart = (e, item) => {
+    e.dataTransfer.setData('text/plain', item);
+  };
+
+  const onDragOver = (e) => {
+    e.preventDefault();
+  };
+
+  const onDrop = (e) => {
+    e.preventDefault();
+    const item = e.dataTransfer.getData('text');
+    setDroppedItem(item);
+    checkProphylaxis(item);
+  };
+
+  const checkProphylaxis = (condition) => {
+    if (recommendedList.includes(condition)) {
+      setResult({ recommended: true, message: 'Antibiotikaprofylax rekommenderas' });
+    } else if (notRecommendedList.includes(condition)) {
+      setResult({ recommended: false, message: 'Antibiotikaprofylax rekommenderas inte' });
+    } else if (specialCasesList.includes(condition)) {
+      setResult({ 
+        recommended: null, 
+        message: 'Antibiotikaprofylax kan vara aktuellt. Behandlande hjärtläkares ansvar efter individuell bedömning.' 
+      });
+    } else {
+      setResult({ recommended: null, message: 'Ingen matchning hittades. Konsultera en läkare för rådgivning.' });
+    }
+  };
+
+  const splitConditions = (conditions) => {
+    const midpoint = Math.ceil(conditions.length / 2);
+    return [conditions.slice(0, midpoint), conditions.slice(midpoint)];
+  };
+
+  const [leftColumn, rightColumn] = splitConditions(allConditions);
+
+  return (
+    <div className="space-y-8">
+      <div className="bg-blue-100 p-4 rounded-lg">
+        <h2 className="text-xl font-bold mb-2">Instruktioner:</h2>
+        <ol className="list-decimal pl-5">
+          <li>Välj ett tillstånd från listorna nedan</li>
+          <li>Dra och släpp tillståndet i den markerade rutan</li>
+          <li>Se resultatet för antibiotikaprofylax rekommendation</li>
+        </ol>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div className="bg-gray-100 p-4 rounded-lg">
+          <div className="space-y-2">
+            {leftColumn.map((item, index) => (
+              <div
+                key={index}
+                draggable
+                onDragStart={(e) => onDragStart(e, item)}
+                className="bg-white p-2 rounded shadow cursor-move"
+              >
+                {item}
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="bg-gray-100 p-4 rounded-lg">
+          <div className="space-y-2">
+            {rightColumn.map((item, index) => (
+              <div
+                key={index}
+                draggable
+                onDragStart={(e) => onDragStart(e, item)}
+                className="bg-white p-2 rounded shadow cursor-move"
+              >
+                {item}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div
+        onDragOver={onDragOver}
+        onDrop={onDrop}
+        className="bg-yellow-100 p-6 rounded-lg border-2 border-dashed border-yellow-500 flex items-center justify-center h-32"
+      >
+        <p className="text-center text-lg font-semibold">
+          {droppedItem ? droppedItem : "Släpp tillståndet här"}
+        </p>
+      </div>
+
+      {result && (
+        <Alert 
+          variant={result.recommended === true ? "default" : result.recommended === false ? "destructive" : "warning"} 
+          className={`text-lg p-6 border-4 ${
+            result.recommended === true 
+              ? "bg-green-100 border-green-500 text-green-700" 
+              : result.recommended === false 
+                ? "bg-red-100 border-red-500 text-red-700"
+                : "bg-blue-100 border-blue-500 text-blue-700"
+          }`}
+        >
+          <AlertTitle className="text-2xl font-bold mb-2">
+            {result.recommended === true ? "Rekommenderas" : 
+             result.recommended === false ? "Rekommenderas inte" : 
+             "Särskilt övervägande krävs"}
+          </AlertTitle>
+          <AlertDescription className="text-xl">{result.message}</AlertDescription>
+        </Alert>
+      )}
+
+      <div className="space-y-2">
+        <Button onClick={() => setShowSources(!showSources)}>
+          Hur kan jag lita på denna information?
+        </Button>
+        {showSources && (
+          <div className="bg-gray-100 p-4 rounded-lg mt-2">
+            <p className="font-semibold">Källa: Tandvårdens Läkemedel 2024-2025</p>
+            <p className="mt-2">Som i sin tur använder följande källor:</p>
+            <ol className="list-decimal pl-5 mt-2 space-y-1">
+              {/* Lista delle fonti come prima */}
+            </ol>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default AntibiotikaProfilaxPage;
